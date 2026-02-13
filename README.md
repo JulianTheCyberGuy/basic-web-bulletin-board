@@ -94,7 +94,7 @@ git clone https://github.com/JulianTheCyberGuy/basic-web-bulletin-board.git
 cd basic-web-bulletin-board
 </pre>
 
-<h3>2. (Optional) Create a Virtual Environment</h3>
+<h3>2. (Optional for Flask) Create a Virtual Environment</h3>
 
 <p><strong>Mac/Linux:</strong></p>
 
