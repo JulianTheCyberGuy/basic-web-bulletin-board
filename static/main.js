@@ -6,13 +6,28 @@ function escapeHtml(str) {
   }[c]));
 }
 
+function formatTimestamp(isoString) {
+    const date = new Date(isoString);
+  
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "America/New_York",
+      timeZoneName: "short"
+    });
+  }
+  
 function renderPost(p) {
     const div = document.createElement("div");
     div.className = "post";
   
     const timestamp = document.createElement("div");
     timestamp.className = "timestamp";
-    timestamp.textContent = p.created_at;
+    timestamp.textContent = formatTimestamp(p.created_at);
   
     const author = document.createElement("div");
     author.className = "author";
