@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 DB_PATH = "bulletin.db"
 
@@ -20,8 +20,7 @@ def init_db():
 
 @app.get("/")
 def home():
-    # Frontend comes next commit
-    return "Bulletin Board API is running."
+    return render_template("index.html")
 
 @app.get("/api/posts")
 def get_posts():
