@@ -7,20 +7,28 @@ function escapeHtml(str) {
 }
 
 function renderPost(p) {
-  const div = document.createElement("div");
-  div.className = "post";
-
-  const meta = document.createElement("div");
-  meta.className = "meta";
-  meta.textContent = `${p.created_at} | ${p.author_email}`;
-
-  const body = document.createElement("div");
-  body.innerHTML = escapeHtml(p.body).replace(/\n/g, "<br>");
-
-  div.appendChild(meta);
-  div.appendChild(body);
-  return div;
-}
+    const div = document.createElement("div");
+    div.className = "post";
+  
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = p.created_at;
+  
+    const author = document.createElement("div");
+    author.className = "author";
+    author.textContent = p.author_email;
+  
+    const body = document.createElement("div");
+    body.className = "post-body";
+    body.textContent = p.body;
+  
+    div.appendChild(timestamp);
+    div.appendChild(author);
+    div.appendChild(body);
+  
+    return div;
+  }
+  
 
 function showError(msg) {
   const el = document.getElementById("formError");
