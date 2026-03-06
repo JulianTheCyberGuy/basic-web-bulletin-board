@@ -346,9 +346,11 @@ def login():
         session_id,
         httponly=True,
         samesite="Lax",
-        secure=False,
+        secure=not app.debug,
         max_age=SESSION_LIFETIME_HOURS * 60 * 60,
+        path="/",
     )
+    
     return response
 
 
@@ -367,7 +369,7 @@ def logout():
             conn.close()
 
     response = make_response(jsonify({"message": "Logged out."}))
-    response.delete_cookie(SESSION_COOKIE_NAME)
+    response.delete_cookie(SESSION_COOKIE_NAME, path="/")
     return response
 
 
