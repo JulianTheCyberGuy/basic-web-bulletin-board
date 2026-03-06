@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 
 bulletin.db
+
+__pycache__/
+*.pyc
