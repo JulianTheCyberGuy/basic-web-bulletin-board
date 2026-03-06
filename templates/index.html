@@ -57,6 +57,7 @@
 
     button {
       margin-top: 14px;
+      margin-right: 8px;
       padding: 10px 14px;
       border-radius: 6px;
       border: none;
@@ -96,17 +97,49 @@
       margin-top: 10px;
       display: none;
     }
+
+    .status {
+      margin-bottom: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      background: #eef5ff;
+    }
   </style>
 </head>
 
 <body>
-
   <div class="container">
     <h1>Basic Bulletin Board</h1>
 
+    <div id="authStatus" class="status">Checking session...</div>
+
+    <form id="registerForm">
+      <h2>Register</h2>
+      <label for="registerEmail">Email</label>
+      <input id="registerEmail" type="email" placeholder="name@example.com" required />
+
+      <label for="registerPassword">Password</label>
+      <input id="registerPassword" type="password" placeholder="At least 8 characters" required />
+
+      <button type="submit">Register</button>
+    </form>
+
+    <form id="loginForm">
+      <h2>Login</h2>
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" placeholder="name@example.com" required />
+
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" type="password" placeholder="Enter your password" required />
+
+      <button type="submit">Login</button>
+      <button type="button" id="logoutButton">Logout</button>
+      <div id="authError" class="error"></div>
+    </form>
+
     <form id="postForm">
-      <label for="email">Author Email</label>
-      <input id="email" type="email" placeholder="name@example.com" required />
+      <h2>New Post</h2>
+      <p id="postHint">Log in to publish a post.</p>
 
       <label for="body">Post</label>
       <textarea id="body" placeholder="Write your post..." required></textarea>
@@ -119,6 +152,5 @@
   </div>
 
   <script src="/static/main.js"></script>
-
 </body>
 </html>

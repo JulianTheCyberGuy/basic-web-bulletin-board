@@ -1,60 +1,86 @@
 let lastTimestamp = "";
-
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-  }[c]));
-}
+let currentUser = null;
 
 function formatTimestamp(isoString) {
-    const date = new Date(isoString);
-  
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "America/New_York",
-      timeZoneName: "short"
-    });
-  }
-  
-function renderPost(p) {
-    const div = document.createElement("div");
-    div.className = "post";
-  
-    const timestamp = document.createElement("div");
-    timestamp.className = "timestamp";
-    timestamp.textContent = formatTimestamp(p.created_at);
-  
-    const author = document.createElement("div");
-    author.className = "author";
-    author.textContent = p.author_email;
-  
-    const body = document.createElement("div");
-    body.className = "post-body";
-    body.textContent = p.body;
-  
-    div.appendChild(timestamp);
-    div.appendChild(author);
-    div.appendChild(body);
-  
-    return div;
-  }
-  
+  const date = new Date(isoString);
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "America/New_York",
+    timeZoneName: "short"
+  });
+}
 
-function showError(msg) {
-  const el = document.getElementById("formError");
+function renderPost(p) {
+  const div = document.createElement("div");
+  div.className = "post";
+
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = formatTimestamp(p.created_at);
+
+  const author = document.createElement("div");
+  author.className = "author";
+  author.textContent = p.author_email;
+
+  const body = document.createElement("div");
+  body.className = "post-body";
+  body.textContent = p.body;
+
+  div.appendChild(timestamp);
+  div.appendChild(author);
+  div.appendChild(body);
+
+  return div;
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
   el.textContent = msg;
   el.style.display = "block";
 }
 
-function clearError() {
-  const el = document.getElementById("formError");
+function clearError(id) {
+  const el = document.getElementById(id);
   el.textContent = "";
   el.style.display = "none";
+}
+
+function updateAuthUi() {
+  const authStatus = document.getElementById("authStatus");
+  const postHint = document.getElementById("postHint");
+  const postButton = document.querySelector("#postForm button[type='submit']");
+
+  if (currentUser) {
+    authStatus.textContent = `Logged in as ${currentUser.email}`;
+    postHint.textContent = `Your post will publish as ${currentUser.email}.`;
+    postButton.disabled = false;
+  } else {
+    authStatus.textContent = "Not logged in.";
+    postHint.textContent = "Log in to publish a post.";
+    postButton.disabled = true;
+  }
+}
+
+async function loadCurrentUser() {
+  try {
+    const res = await fetch("/api/me", { credentials: "same-origin" });
+    if (!res.ok) {
+      currentUser = null;
+      updateAuthUi();
+      return;
+    }
+
+    currentUser = await res.json();
+    updateAuthUi();
+  } catch {
+    currentUser = null;
+    updateAuthUi();
+  }
 }
 
 async function loadAllPosts() {
@@ -86,11 +112,44 @@ async function fetchNewPosts() {
   }
 }
 
-async function submitPost(email, body) {
+async function register(email, password) {
+  const res = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to register.");
+  return data;
+}
+
+async function login(email, password) {
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to login.");
+  return data;
+}
+
+async function logout() {
+  await fetch("/api/logout", {
+    method: "POST",
+    credentials: "same-origin"
+  });
+}
+
+async function submitPost(body) {
   const res = await fetch("/api/posts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ author_email: email, body })
+    credentials: "same-origin",
+    body: JSON.stringify({ body })
   });
 
   const data = await res.json();
@@ -98,21 +157,60 @@ async function submitPost(email, body) {
   return data;
 }
 
-document.getElementById("postForm").addEventListener("submit", async (e) => {
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  clearError();
+  clearError("authError");
 
-  const email = document.getElementById("email").value.trim();
-  const body = document.getElementById("body").value.trim();
+  const email = document.getElementById("registerEmail").value.trim();
+  const password = document.getElementById("registerPassword").value;
 
   try {
-    await submitPost(email, body);
-    document.getElementById("body").value = "";
-    await fetchNewPosts();
+    await register(email, password);
+    document.getElementById("registerPassword").value = "";
+    showError("authError", "Registration successful. You can log in now.");
   } catch (err) {
-    showError(err.message);
+    showError("authError", err.message);
   }
 });
 
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearError("authError");
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  try {
+    await login(email, password);
+    document.getElementById("loginPassword").value = "";
+    await loadCurrentUser();
+  } catch (err) {
+    showError("authError", err.message);
+  }
+});
+
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  clearError("authError");
+  await logout();
+  currentUser = null;
+  updateAuthUi();
+});
+
+document.getElementById("postForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearError("formError");
+
+  const body = document.getElementById("body").value.trim();
+
+  try {
+    await submitPost(body);
+    document.getElementById("body").value = "";
+    await fetchNewPosts();
+  } catch (err) {
+    showError("formError", err.message);
+  }
+});
+
+loadCurrentUser();
 loadAllPosts();
 setInterval(fetchNewPosts, 5000);
