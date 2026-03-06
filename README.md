@@ -177,7 +177,8 @@ basic-web-bulletin-board
 │   └── index.html
 │
 ├── static
-│   └── styles.css
+│   └── styles.css  
+│   └── main.js
 │
 └── README.md
 </pre>
