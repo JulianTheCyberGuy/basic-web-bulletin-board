@@ -283,6 +283,14 @@
     display: grid;
     gap: 16px;
   }
+
+  .app-version {
+  text-align: center;
+  margin: 60px 0 20px;
+  font-size: 12px;
+  opacity: 0.6;
+  color: #888;
+}
   
   .post-card {
     border: 1px solid var(--border);
