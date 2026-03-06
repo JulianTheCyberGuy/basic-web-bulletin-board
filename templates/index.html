@@ -1,564 +1,452 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Basic Bulletin Board</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --bg-accent: #1e293b;
-      --surface: rgba(255, 255, 255, 0.92);
-      --surface-strong: #ffffff;
-      --border: rgba(148, 163, 184, 0.25);
-      --text: #0f172a;
-      --muted: #64748b;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --success-bg: #ecfdf3;
-      --success-text: #166534;
-      --error-bg: #fef2f2;
-      --error-text: #b91c1c;
-      --warning-bg: #eff6ff;
-      --warning-text: #1d4ed8;
-      --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
-      --radius-lg: 20px;
-      --radius-md: 14px;
-      --radius-sm: 10px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(37, 99, 235, 0.30), transparent 28%),
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 24%),
-        linear-gradient(180deg, var(--bg) 0%, #111827 35%, #e2e8f0 35%, #f8fafc 100%);
-    }
-
-    .page-shell {
-      width: min(1120px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 32px 0 56px;
-    }
-
-    .hero {
-      color: white;
-      padding: 8px 4px 28px;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
-      font-size: 0.9rem;
-      letter-spacing: 0.01em;
-    }
-
-    .hero h1 {
-      margin: 18px 0 10px;
-      font-size: clamp(2rem, 3vw, 3.4rem);
-      line-height: 1.05;
-    }
-
-    .hero p {
-      max-width: 720px;
-      margin: 0;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 1.03rem;
-      line-height: 1.65;
-    }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
-      gap: 24px;
-      align-items: start;
-    }
-
-    .stack {
-      display: grid;
-      gap: 20px;
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow: hidden;
-    }
-
-    .panel-inner {
-      padding: 22px;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-
-    .panel-title {
-      margin: 0;
-      font-size: 1.1rem;
-    }
-
-    .panel-subtitle {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 0.86rem;
-      font-weight: 700;
-      white-space: nowrap;
-      background: var(--warning-bg);
-      color: var(--warning-text);
-    }
-
-    .status-pill.success {
-      background: var(--success-bg);
-      color: var(--success-text);
-    }
-
-    .status-pill.neutral {
-      background: #f1f5f9;
-      color: #334155;
-    }
-
-    .auth-grid {
-      display: grid;
-      gap: 16px;
-    }
-
-    .auth-card {
-      padding: 16px;
-      border: 1px solid rgba(148, 163, 184, 0.28);
-      border-radius: var(--radius-md);
-      background: rgba(255, 255, 255, 0.72);
-    }
-
-    .auth-card h3,
-    .composer-title {
-      margin: 0 0 6px;
-      font-size: 1rem;
-    }
-
-    .auth-card p,
-    .composer-meta,
-    .feed-meta {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.5;
-    }
-
-    label {
-      display: block;
-      margin: 0 0 8px;
-      font-size: 0.93rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font: inherit;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-      outline: none;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: rgba(37, 99, 235, 0.65);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 160px;
-    }
-
-    .field + .field {
-      margin-top: 14px;
-    }
-
-    .actions,
-    .auth-actions,
-    .feed-toolbar,
-    .composer-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .auth-actions {
-      margin-top: 14px;
-    }
-
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 11px 16px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, opacity 0.18s ease;
-    }
-
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), #3b82f6);
-      color: white;
-      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-    }
-
-    .btn-secondary {
-      background: #e2e8f0;
-      color: #1e293b;
-    }
-
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.65);
-      color: #334155;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-    }
-
-    .helper-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .char-count {
-      font-variant-numeric: tabular-nums;
-    }
-
-    .message {
-      display: none;
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-size: 0.94rem;
-      line-height: 1.5;
-    }
-
-    .message.error {
-      background: var(--error-bg);
-      color: var(--error-text);
-      border: 1px solid rgba(239, 68, 68, 0.18);
-    }
-
-    .message.success {
-      background: var(--success-bg);
-      color: var(--success-text);
-      border: 1px solid rgba(34, 197, 94, 0.18);
-    }
-
-    .feed-toolbar {
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .feed-stats {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .stat-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #f8fafc;
-      color: #334155;
-      font-size: 0.88rem;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-    }
-
-    .posts-grid {
-      display: grid;
-      gap: 16px;
-    }
-
-    .empty-state {
-      padding: 32px 24px;
-      text-align: center;
-      border: 1px dashed rgba(148, 163, 184, 0.5);
-      border-radius: 16px;
-      background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(241, 245, 249, 0.75));
-      color: var(--muted);
-    }
-
-    .empty-state strong {
-      display: block;
-      color: #0f172a;
-      margin-bottom: 8px;
-      font-size: 1rem;
-    }
-
-    .post {
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 18px;
-      background: var(--surface-strong);
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-    }
-
-    .post-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-
-    .post-author {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      min-width: 0;
-    }
-
-    .avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #bfdbfe, #60a5fa);
-      color: #0f172a;
-      font-weight: 800;
-      flex-shrink: 0;
-    }
-
-    .author-name {
-      margin: 0;
-      font-weight: 800;
-      color: #0f172a;
-      overflow-wrap: anywhere;
-    }
-
-    .author-tag {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-
-    .timestamp {
-      color: var(--muted);
-      font-size: 0.85rem;
-      white-space: nowrap;
-      text-align: right;
-    }
-
-    .post-body {
-      white-space: pre-wrap;
-      line-height: 1.68;
-      color: #1e293b;
-      overflow-wrap: anywhere;
-    }
-
-    .composer-disabled {
-      opacity: 0.7;
-    }
-
-    @media (max-width: 920px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .page-shell {
-        width: min(100% - 20px, 1120px);
-        padding-top: 20px;
-      }
-
-      .panel-inner {
-        padding: 18px;
-      }
-
-      .post-head,
-      .feed-toolbar,
-      .helper-row,
-      .panel-header {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .timestamp {
-        text-align: left;
-      }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Web Bulletin Board</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 </head>
 <body>
-  <main class="page-shell">
-    <section class="hero">
-      <div class="hero-badge">Live community feed</div>
-      <h1>Basic Bulletin Board, upgraded.</h1>
-      <p>
-        A cleaner, more modern interface for registering, logging in, and sharing updates,
-        while keeping your current Flask functionality exactly where it is.
-      </p>
+  <header class="site-header">
+    <div class="container">
+      <div class="hero-card">
+        <div class="hero-copy">
+          <p class="eyebrow">Simple, fast, and clean</p>
+          <h1>Basic Web Bulletin Board</h1>
+          <p class="hero-text">
+            Create an account, sign in, and post updates under your email address.
+          </p>
+        </div>
+        <div class="hero-status" id="heroStatus">Checking status...</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-grid">
+    <section class="auth-column">
+      <div id="globalMessage"></div>
+
+      <section class="panel auth-panel">
+        <div class="panel-header">
+          <h2>Account</h2>
+          <p>Create an account, sign in, and post under your email address.</p>
+        </div>
+
+        <div class="auth-stack">
+          <section class="auth-card" id="registerCard">
+            <h3>Register</h3>
+            <p class="muted">New here? Create your account to start posting.</p>
+
+            <form id="registerForm" novalidate>
+              <label for="registerEmail">Email</label>
+              <input
+                id="registerEmail"
+                name="email"
+                type="email"
+                maxlength="254"
+                autocomplete="email"
+                placeholder="you@example.com"
+                required
+              />
+
+              <label for="registerPassword">Password</label>
+              <input
+                id="registerPassword"
+                name="password"
+                type="password"
+                minlength="8"
+                autocomplete="new-password"
+                placeholder="At least 8 characters"
+                required
+              />
+
+              <button type="submit" class="btn btn-primary" id="registerButton">
+                Create account
+              </button>
+            </form>
+          </section>
+
+          <section class="auth-card" id="loginCard">
+            <h3>Login</h3>
+            <p class="muted">Access your session to publish new updates.</p>
+
+            <form id="loginForm" novalidate>
+              <label for="loginEmail">Email</label>
+              <input
+                id="loginEmail"
+                name="email"
+                type="email"
+                maxlength="254"
+                autocomplete="email"
+                placeholder="you@example.com"
+                required
+              />
+
+              <label for="loginPassword">Password</label>
+              <input
+                id="loginPassword"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                required
+              />
+
+              <button type="submit" class="btn btn-primary" id="loginButton">
+                Login
+              </button>
+            </form>
+          </section>
+        </div>
+      </section>
     </section>
 
-    <section class="dashboard">
-      <div class="stack">
-        <section class="panel">
-          <div class="panel-inner">
-            <div class="panel-header">
-              <div>
-                <h2 class="panel-title">Account</h2>
-                <p class="panel-subtitle">Create an account, sign in, and post under your email address.</p>
-              </div>
-              <div id="authStatusPill" class="status-pill">Checking session...</div>
-            </div>
+    <section class="feed-column">
+      <section class="panel composer-panel">
+        <div class="panel-header">
+          <h2>Create Post</h2>
+          <p>Share a short update with everyone on the board.</p>
+        </div>
 
-            <div class="auth-grid">
-              <form id="registerForm" class="auth-card">
-                <h3>Register</h3>
-                <p>New here? Create your account to start posting.</p>
+        <form id="postForm" novalidate>
+          <label for="postBody">Message</label>
+          <textarea
+            id="postBody"
+            name="body"
+            maxlength="2000"
+            rows="5"
+            placeholder="What would you like to share?"
+            required
+          ></textarea>
 
-                <div class="field">
-                  <label for="registerEmail">Email</label>
-                  <input id="registerEmail" type="email" placeholder="name@example.com" required />
-                </div>
-
-                <div class="field">
-                  <label for="registerPassword">Password</label>
-                  <input id="registerPassword" type="password" placeholder="At least 8 characters" required />
-                </div>
-
-                <div class="auth-actions">
-                  <button type="submit" class="btn-primary">Create account</button>
-                </div>
-              </form>
-
-              <form id="loginForm" class="auth-card">
-                <h3>Login</h3>
-                <p>Access your session to publish new updates.</p>
-
-                <div class="field">
-                  <label for="loginEmail">Email</label>
-                  <input id="loginEmail" type="email" placeholder="name@example.com" required />
-                </div>
-
-                <div class="field">
-                  <label for="loginPassword">Password</label>
-                  <input id="loginPassword" type="password" placeholder="Enter your password" required />
-                </div>
-
-                <div class="auth-actions">
-                  <button type="submit" class="btn-primary">Login</button>
-                  <button type="button" id="logoutButton" class="btn-secondary">Logout</button>
-                </div>
-              </form>
-            </div>
-
-            <div id="authMessage" class="message"></div>
+          <div class="composer-footer">
+            <span id="charCount">0 / 2000</span>
+            <button type="submit" class="btn btn-primary" id="postButton">Post</button>
           </div>
-        </section>
+        </form>
+      </section>
 
-        <section id="composerPanel" class="panel">
-          <div class="panel-inner">
-            <div class="panel-header">
-              <div>
-                <h2 class="panel-title">Create a post</h2>
-                <p id="postHint" class="panel-subtitle">Log in to publish a post.</p>
-              </div>
-            </div>
-
-            <form id="postForm">
-              <div class="field">
-                <label for="body">Post</label>
-                <textarea id="body" placeholder="Write your post..." required></textarea>
-              </div>
-
-              <div class="helper-row">
-                <span>Keep it helpful, clear, and community-friendly.</span>
-                <span id="charCount" class="char-count">0 / 2000</span>
-              </div>
-
-              <div class="auth-actions">
-                <button type="submit" class="btn-primary">Publish post</button>
-              </div>
-
-              <div id="formMessage" class="message"></div>
-            </form>
+      <section class="panel feed-panel">
+        <div class="feed-header">
+          <div>
+            <h2>Recent Posts</h2>
+            <p class="muted">Newest updates from the bulletin board.</p>
           </div>
-        </section>
-      </div>
+          <button class="btn btn-secondary" id="refreshButton" type="button">Refresh</button>
+        </div>
 
-      <section class="panel">
-        <div class="panel-inner">
-          <div class="feed-toolbar">
-            <div>
-              <h2 class="panel-title">Community feed</h2>
-              <p class="feed-meta">Recent posts update automatically every few seconds.</p>
-            </div>
-            <div class="feed-stats">
-              <div id="feedCount" class="stat-chip">0 posts</div>
-              <button id="refreshButton" type="button" class="btn-ghost">Refresh</button>
-            </div>
+        <div id="postsContainer" class="posts-container">
+          <div class="empty-state">
+            <h3>No posts yet</h3>
+            <p>Be the first person to share an update.</p>
           </div>
-
-          <div id="posts" class="posts-grid"></div>
         </div>
       </section>
     </section>
   </main>
 
-  <script src="/static/main.js"></script>
+  <script>
+    const globalMessage = document.getElementById("globalMessage");
+    const heroStatus = document.getElementById("heroStatus");
+
+    const registerForm = document.getElementById("registerForm");
+    const registerEmail = document.getElementById("registerEmail");
+    const registerPassword = document.getElementById("registerPassword");
+    const registerButton = document.getElementById("registerButton");
+
+    const loginForm = document.getElementById("loginForm");
+    const loginCard = document.getElementById("loginCard");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginButton = document.getElementById("loginButton");
+
+    const postForm = document.getElementById("postForm");
+    const postBody = document.getElementById("postBody");
+    const postButton = document.getElementById("postButton");
+    const charCount = document.getElementById("charCount");
+
+    const refreshButton = document.getElementById("refreshButton");
+    const postsContainer = document.getElementById("postsContainer");
+
+    function showMessage(type, text) {
+      globalMessage.innerHTML = `
+        <div class="alert alert-${type}">
+          ${text}
+        </div>
+      `;
+    }
+
+    function clearMessage() {
+      globalMessage.innerHTML = "";
+    }
+
+    function setButtonLoading(button, loadingText, isLoading) {
+      if (isLoading) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = loadingText;
+        button.disabled = true;
+      } else {
+        button.textContent = button.dataset.originalText || button.textContent;
+        button.disabled = false;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return date.toLocaleString([], {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function updateCharCount() {
+      charCount.textContent = `${postBody.value.length} / 2000`;
+    }
+
+    function highlightLoginCard() {
+      loginCard.classList.add("login-highlight");
+      setTimeout(() => {
+        loginCard.classList.remove("login-highlight");
+      }, 4000);
+    }
+
+    function setLoggedInUI(email) {
+      heroStatus.textContent = `Logged in as ${email}`;
+      heroStatus.className = "hero-status logged-in";
+    }
+
+    function setLoggedOutUI() {
+      heroStatus.textContent = "Not logged in";
+      heroStatus.className = "hero-status logged-out";
+    }
+
+    async function fetchMe() {
+      try {
+        const response = await fetch("/api/me", {
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          setLoggedOutUI();
+          return;
+        }
+
+        const data = await response.json();
+        if (data.authenticated) {
+          setLoggedInUI(data.email);
+        } else {
+          setLoggedOutUI();
+        }
+      } catch (error) {
+        setLoggedOutUI();
+      }
+    }
+
+    function renderPosts(posts) {
+      if (!Array.isArray(posts) || posts.length === 0) {
+        postsContainer.innerHTML = `
+          <div class="empty-state">
+            <h3>No posts yet</h3>
+            <p>Be the first person to share an update.</p>
+          </div>
+        `;
+        return;
+      }
+
+      postsContainer.innerHTML = posts
+        .slice()
+        .reverse()
+        .map((post) => {
+          const safeEmail = escapeHtml(post.author_email || "Unknown user");
+          const safeBody = escapeHtml(post.body || "");
+          const safeCreatedAt = escapeHtml(formatDate(post.created_at || ""));
+          const initial = safeEmail.charAt(0).toUpperCase();
+
+          return `
+            <article class="post-card">
+              <div class="post-top">
+                <div class="avatar">${initial}</div>
+                <div class="post-meta">
+                  <div class="post-author">${safeEmail}</div>
+                  <div class="post-time">${safeCreatedAt}</div>
+                </div>
+              </div>
+              <div class="post-body">${safeBody.replace(/\n/g, "<br>")}</div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    async function loadPosts() {
+      try {
+        const response = await fetch("/api/posts", {
+          credentials: "same-origin"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage("error", data.error || "Unable to load posts.");
+          return;
+        }
+
+        renderPosts(data);
+      } catch (error) {
+        showMessage("error", "Unable to load posts.");
+      }
+    }
+
+    registerForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      const email = registerEmail.value.trim();
+      const password = registerPassword.value;
+
+      setButtonLoading(registerButton, "Creating account...", true);
+
+      try {
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage("error", data.error || "Unable to create account.");
+          return;
+        }
+
+        showMessage(
+          "success",
+          "Account created successfully. You can now log in below."
+        );
+
+        registerForm.reset();
+        loginEmail.value = email;
+        loginPassword.value = "";
+        highlightLoginCard();
+
+        loginCard.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+
+        setTimeout(() => {
+          loginPassword.focus();
+        }, 350);
+      } catch (error) {
+        showMessage("error", "Unable to create account.");
+      } finally {
+        setButtonLoading(registerButton, "Creating account...", false);
+      }
+    });
+
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      setButtonLoading(loginButton, "Logging in...", true);
+
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage("error", data.error || "Login failed.");
+          return;
+        }
+
+        showMessage("success", "Login successful. You can now create posts.");
+        setLoggedInUI(data.email || email);
+        loginPassword.value = "";
+      } catch (error) {
+        showMessage("error", "Login failed.");
+      } finally {
+        setButtonLoading(loginButton, "Logging in...", false);
+      }
+    });
+
+    postForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      const body = postBody.value.trim();
+      setButtonLoading(postButton, "Posting...", true);
+
+      try {
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ body })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage("error", data.error || "Unable to create post.");
+          return;
+        }
+
+        postForm.reset();
+        updateCharCount();
+        showMessage("success", "Post created successfully.");
+        await fetchMe();
+        await loadPosts();
+      } catch (error) {
+        showMessage("error", "Unable to create post.");
+      } finally {
+        setButtonLoading(postButton, "Posting...", false);
+      }
+    });
+
+    refreshButton.addEventListener("click", async () => {
+      clearMessage();
+      await fetchMe();
+      await loadPosts();
+    });
+
+    postBody.addEventListener("input", updateCharCount);
+
+    updateCharCount();
+    fetchMe();
+    loadPosts();
+  </script>
 </body>
 </html>
