@@ -1,195 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basic Web Bulletin Board</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: auto;
+    padding: 40px;
+    line-height: 1.6;
+    background: #f8f9fb;
+    color: #222;
+}
+
+h1,h2,h3{
+    margin-top:40px;
+}
+
+code{
+    background:#eee;
+    padding:4px 6px;
+    border-radius:4px;
+}
+
+pre{
+    background:#1e1e1e;
+    color:#eee;
+    padding:15px;
+    border-radius:6px;
+    overflow:auto;
+}
+
+table{
+    border-collapse: collapse;
+    width:100%;
+    margin-top:15px;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+th{
+    background:#f2f2f2;
+}
+
+.section{
+    margin-top:40px;
+}
+</style>
+</head>
+
+<body>
+
 <h1>Basic Web Bulletin Board</h1>
 
 <p>
-This project is a simple web-based bulletin board built with 
-<strong>Flask (Python)</strong> and <strong>SQLite</strong>. 
-Users can submit a post using their email address and a message, 
-and all posts are displayed on the main page. 
-The frontend uses HTML, CSS, and JavaScript, 
-and communicates with the backend through a JSON API.
+A simple Flask-based bulletin board demonstrating <b>secure session handling, user authentication, and posting functionality</b>. 
+Users can register, log in, and create posts associated with their authenticated session.
 </p>
 
 <p>
-The page automatically checks for new posts every few seconds 
-and updates without requiring a refresh.
+This project was originally developed as part of a <b>session management exercise</b> and later expanded with additional usability improvements and deployment support.
 </p>
 
-<hr>
 
-<h2>What This Project Demonstrates</h2>
+<div class="section">
+<h2>Features</h2>
 
+<h3>Authentication and Session Handling</h3>
 <ul>
-  <li>Flask routing</li>
-  <li>REST-style API design</li>
-  <li>SQLite database integration</li>
-  <li>JSON request and response handling</li>
-  <li>Client-side JavaScript fetch API</li>
-  <li>Polling for updates</li>
-  <li>Server-side input validation</li>
-  <li>Basic web security practices</li>
+<li>User registration with email and password</li>
+<li>Secure password hashing using Werkzeug</li>
+<li>Cryptographically secure session IDs</li>
+<li>Cookie-based authentication</li>
+<li>Session validation on every request</li>
+<li>Posts restricted to authenticated users</li>
+<li>Author email automatically attached to posts via session lookup</li>
 </ul>
 
-<hr>
+<h3>Bulletin Board Functionality</h3>
+<ul>
+<li>Create posts while logged in</li>
+<li>Posts show the email of the authenticated user</li>
+<li>Posts stored in a SQLite database</li>
+<li>Posts displayed in a clean feed layout</li>
+<li>Character counter for post length</li>
+<li>Refresh button to reload posts</li>
+</ul>
 
+<h3>User Experience Improvements</h3>
+<ul>
+<li>Modernized interface</li>
+<li>Registration and login panels</li>
+<li>Success and error messaging</li>
+<li>Login highlighting after registration</li>
+<li>Auto-filled login email after registration</li>
+<li>Empty state when no posts exist</li>
+<li>Avatar initials generated from user email</li>
+<li>Form loading indicators</li>
+<li>Post timestamps formatted for readability</li>
+</ul>
+
+<h3>Security Features</h3>
+<ul>
+<li>Cryptographically random session IDs</li>
+<li>Cookie-based session storage</li>
+<li>Password hashing</li>
+<li>HTML escaping to prevent XSS</li>
+<li>Input validation for forms</li>
+<li>Server-side session verification before posting</li>
+</ul>
+
+<h3>Deployment Improvements</h3>
+<ul>
+<li>SQLite schema initialization on startup</li>
+<li>Database migration protection</li>
+<li>Gunicorn production server</li>
+<li>Render deployment support</li>
+<li>Environment-based port configuration</li>
+</ul>
+</div>
+
+
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>Users Table</h3>
+<table>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>user_id</td>
+<td>Unique user identifier</td>
+</tr>
+<tr>
+<td>email</td>
+<td>User email address</td>
+</tr>
+<tr>
+<td>password_hash</td>
+<td>Securely hashed password</td>
+</tr>
+</table>
+
+
+<h3>Sessions Table</h3>
+<table>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>session_id</td>
+<td>Cryptographically generated session identifier</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>Associated user</td>
+</tr>
+<tr>
+<td>expires_at</td>
+<td>Session expiration timestamp</td>
+</tr>
+</table>
+
+
+<h3>Posts Table</h3>
+<table>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>Post ID</td>
+</tr>
+<tr>
+<td>author_email</td>
+<td>Email of the user who created the post</td>
+</tr>
+<tr>
+<td>body</td>
+<td>Post content</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>Timestamp</td>
+</tr>
+</table>
+
+</div>
+
+
+<div class="section">
+<h2>How Session Handling Works</h2>
+
+<ol>
+<li>User registers and password is hashed before storage.</li>
+<li>User logs in and server generates a <b>cryptographically random session ID</b>.</li>
+<li>The session ID is stored in the <b>sessions table</b>.</li>
+<li>The session ID is sent to the browser as a <b>cookie</b>.</li>
+<li>Every request checks the cookie for a valid session.</li>
+<li>If valid, the server retrieves the user linked to the session.</li>
+<li>The authenticated user can create posts.</li>
+</ol>
+
+<p>If a session is invalid or missing, the user cannot create posts.</p>
+
+</div>
+
+
+<div class="section">
 <h2>Project Structure</h2>
 
 <pre>
-basic-web-bulletin-board/
+basic-web-bulletin-board
 │
 ├── app.py
 ├── schema.sql
 ├── requirements.txt
-├── templates/
+├── render.yaml
+│
+├── templates
 │   └── index.html
-└── static/
-    └── main.js
+│
+├── static
+│   └── styles.css
+│
+└── README.md
 </pre>
 
-<hr>
+</div>
 
-<h2>File Descriptions</h2>
 
-<p><strong>app.py</strong><br>
-Main Flask application.<br>
-- Serves the main page<br>
-- Handles API routes<br>
-- Validates input<br>
-- Connects to SQLite<br>
-- Initializes the database on startup
-</p>
+<div class="section">
+<h2>Running Locally</h2>
 
-<p><strong>schema.sql</strong><br>
-Defines the database schema.<br>
-- Creates the <code>posts</code> table<br>
-- Adds an index on <code>created_at</code>
-</p>
-
-<p><strong>templates/index.html</strong><br>
-Main page layout.<br>
-- Post submission form<br>
-- Post display container<br>
-- Loads <code>main.js</code>
-</p>
-
-<p><strong>static/main.js</strong><br>
-Client-side logic.<br>
-- Fetches posts from the API<br>
-- Submits new posts<br>
-- Polls the server every 5 seconds<br>
-- Renders posts safely using <code>textContent</code>
-</p>
-
-<p><strong>requirements.txt</strong><br>
-Lists required Python dependencies (Flask).
-</p>
-
-<hr>
-
-<h2>Setup Instructions</h2>
-
-<h3>1. Clone the Repository</h3>
-
-<pre>
-git clone https://github.com/JulianTheCyberGuy/basic-web-bulletin-board.git
-cd basic-web-bulletin-board
-</pre>
-
-<h3>2. (Optional for Flask) Create a Virtual Environment</h3>
-
-<p><strong>Mac/Linux:</strong></p>
-
-<pre>
-python3 -m venv .venv
-source .venv/bin/activate
-</pre>
-
-<p><strong>Windows:</strong></p>
-
-<pre>
-python -m venv .venv
-.venv\Scripts\activate
-</pre>
-
-<h3>3. Install Dependencies</h3>
+<h3>Install dependencies</h3>
 
 <pre>
 pip install -r requirements.txt
 </pre>
 
-<h3>4. Run the Application</h3>
+<h3>Start the server</h3>
 
 <pre>
 python app.py
 </pre>
 
-<p>
-Open your browser and navigate to:<br>
-<strong>http://127.0.0.1:5000</strong>
-</p>
+<p>The application will run at:</p>
 
-<hr>
+<code>http://localhost:5000</code>
 
-<h2>API Endpoints</h2>
+</div>
 
-<p><strong>GET /api/posts</strong><br>
-Returns all posts in JSON format.
-</p>
 
-<p><strong>GET /api/posts?since=&lt;timestamp&gt;</strong><br>
-Returns only posts created after the provided timestamp.
-</p>
+<div class="section">
+<h2>Production Deployment</h2>
 
-<p><strong>POST /api/posts</strong><br>
-Creates a new post.
-</p>
-
-<p>Example JSON body:</p>
+<p>This project is configured for deployment on <b>Render</b> using Gunicorn.</p>
 
 <pre>
-{
-  "author_email": "name@example.com",
-  "body": "Hello world!"
-}
+gunicorn app:app --bind 0.0.0.0:$PORT
 </pre>
 
-<hr>
+<p>The database schema initializes automatically on startup.</p>
 
-<h2>Validation Rules</h2>
+</div>
 
-<ul>
-  <li>Email must contain "@" and a "." in the domain</li>
-  <li>Email maximum length: 254 characters</li>
-  <li>Body cannot be empty</li>
-  <li>Body maximum length: 2000 characters</li>
-</ul>
 
-<p>
-If validation fails, the server returns an error response.
-</p>
-
-<hr>
-
-<h2>Security Notes</h2>
+<div class="section">
+<h2>Technologies Used</h2>
 
 <ul>
-  <li>Posts are rendered using <code>textContent</code> to prevent HTML injection.</li>
-  <li>Input validation is enforced server-side.</li>
-  <li>No authentication system (educational demo project).</li>
-  <li>Uses Flask development server (not production ready).</li>
+<li>Python</li>
+<li>Flask</li>
+<li>SQLite</li>
+<li>Gunicorn</li>
+<li>HTML</li>
+<li>CSS</li>
+<li>JavaScript</li>
+<li>Render (deployment)</li>
 </ul>
 
-<hr>
+</div>
 
-<h2>Limitations</h2>
+
+<div class="section">
+<h2>Assignment Requirements Covered</h2>
 
 <ul>
-  <li>Uses polling instead of WebSockets (updates may be delayed up to 5 seconds).</li>
-  <li>SQLite is for local development only.</li>
-  <li>No login, moderation, or user management features.</li>
+<li>Users table implemented</li>
+<li>Sessions table implemented</li>
+<li>Cryptographically generated session IDs</li>
+<li>Cookie-based session authentication</li>
+<li>Posts require a valid session</li>
+<li>Post author email pulled via session → user lookup</li>
 </ul>
 
-<hr>
+</div>
 
-<p>
-This project is intended for educational purposes and demonstrates foundational full-stack web development concepts.
-</p>
+
+<div class="section">
+<h2>Additional Enhancements</h2>
+
+<ul>
+<li>Improved user interface</li>
+<li>Deployment configuration</li>
+<li>Session expiration support</li>
+<li>Better user feedback and messaging</li>
+<li>Modern frontend layout</li>
+<li>Production-style error handling</li>
+</ul>
+
+</div>
+
+
+<div class="section">
+<h2>Demonstration</h2>
+
+<p>The demonstration video shows:</p>
+
+<ul>
+<li>User registration</li>
+<li>Login and session creation</li>
+<li>Cookie-based authentication</li>
+<li>Authenticated post creation</li>
+<li>Session-based author identification</li>
+</ul>
+
+</div>
+
+
+<div class="section">
+<h2>License</h2>
+
+<p>This project was created for educational purposes.</p>
+</div>
+
+
+</body>
+</html>
