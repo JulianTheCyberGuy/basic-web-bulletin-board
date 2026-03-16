@@ -6,19 +6,24 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from flask import Flask, jsonify, make_response, render_template, request
-from werkzeug.security import check_password_hash, generate_password_hash
+# Demo #4
+#--------------------------------------------------------------------------
+from werkzeug.security import check_password_hash, generate_password_hash 
+#--------------------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.environ.get("BULLETIN_DB_PATH", os.path.join(BASE_DIR, "bulletin.db"))
 SCHEMA_PATH = os.path.join(BASE_DIR, "schema.sql")
 
+# Demo #1
+#-----------------------------------
 SESSION_COOKIE_NAME = "session_id"
 SESSION_BYTES = 32
 SESSION_LIFETIME_HOURS = 24
 MAX_POST_LENGTH = 2000
 MIN_PASSWORD_LENGTH = 8
 MAX_EMAIL_LENGTH = 254
-
+#-----------------------------------
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
@@ -77,7 +82,8 @@ def init_db() -> None:
     try:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
-
+        # Demo #2
+        #----------------------------------------------------
         # 1. Create base tables if they do not exist.
         conn.execute(
             """
@@ -110,7 +116,10 @@ def init_db() -> None:
             )
             """
         )
+        #----------------------------------------------------
 
+        # Demo #3
+        #----------------------------------------------------
         # 2. Add expires_at if the sessions table is from the older schema.
         if not column_exists(conn, "sessions", "expires_at"):
             app.logger.info("Applying migration: add expires_at to sessions")
@@ -125,6 +134,8 @@ def init_db() -> None:
             """,
             (build_session_expiration(),),
         )
+        #----------------------------------------------------
+        
 
         # 4. Create indexes only after the schema is confirmed safe.
         conn.execute(
@@ -161,15 +172,17 @@ def looks_like_email(email: str) -> bool:
 
     return True
 
-
+# Demo #5
+#-----------------------------------------------------
 def generate_session_id() -> str:
     return secrets.token_urlsafe(SESSION_BYTES)
-
+#-----------------------------------------------------
 
 def normalize_email(email: str) -> str:
     return (email or "").strip().lower()
 
-
+# Demo #6
+#------------------------------------------------------------------------------
 def validate_registration_input(email: str, password: str) -> Optional[str]:
     if not looks_like_email(email):
         return "Invalid email address."
@@ -181,8 +194,10 @@ def validate_registration_input(email: str, password: str) -> Optional[str]:
         return f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
 
     return None
+#------------------------------------------------------------------------------
 
-
+# Demo #7
+#------------------------------------------------------------------------------
 def validate_post_body(body: str) -> Optional[str]:
     if not body:
         return "Post body cannot be empty."
@@ -191,12 +206,13 @@ def validate_post_body(body: str) -> Optional[str]:
         return f"Post too long (max {MAX_POST_LENGTH} characters)."
 
     return None
-
+#------------------------------------------------------------------------------
 
 def cleanup_expired_sessions(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (utc_now_iso(),))
 
-
+# Demo #8
+#----------------------------------------------------------------------------------------------
 def get_current_user():
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_id:
@@ -219,6 +235,7 @@ def get_current_user():
         user = cur.fetchone()
         conn.commit()
         return user
+#----------------------------------------------------------------------------------------------
     except sqlite3.Error as exc:
         app.logger.exception("Database error while resolving current user: %s", exc)
         return None
@@ -226,6 +243,8 @@ def get_current_user():
         conn.close()
 
 
+# Demo #9
+#-----------------------------------------------------------------------------------------
 def create_session_for_user(user_id: int) -> str:
     session_id = generate_session_id()
 
@@ -242,6 +261,7 @@ def create_session_for_user(user_id: int) -> str:
         )
         conn.commit()
         return session_id
+#-----------------------------------------------------------------------------------------
     except sqlite3.Error as exc:
         app.logger.exception("Database error while creating session: %s", exc)
         raise
@@ -277,7 +297,8 @@ def get_me():
         }
     )
 
-
+# Demo #10
+#---------------------------------------------------------------------------------------------
 @app.post("/api/register")
 def register():
     data = request.get_json(silent=True) or {}
@@ -301,6 +322,7 @@ def register():
         )
         conn.commit()
         return jsonify({"message": "User registered."}), 201
+#---------------------------------------------------------------------------------------------
     except sqlite3.IntegrityError as exc:
         app.logger.exception("Integrity error while creating user: %s", exc)
         return jsonify({"error": "User already exists."}), 409
@@ -310,7 +332,8 @@ def register():
     finally:
         conn.close()
 
-
+# Demo #11
+#---------------------------------------------------------------------------------------------------------
 @app.post("/api/login")
 def login():
     data = request.get_json(silent=True) or {}
@@ -331,12 +354,15 @@ def login():
         user = cur.fetchone()
         if not user or not check_password_hash(user["password_hash"], password):
             return jsonify({"error": "Invalid email or password."}), 401
+#---------------------------------------------------------------------------------------------------------
     except sqlite3.Error as exc:
         app.logger.exception("Database error during login: %s", exc)
         return jsonify({"error": "Database error during login."}), 500
     finally:
         conn.close()
 
+    # Demo #12
+    #-------------------------------------------------------------------------------
     session_id = create_session_for_user(user["user_id"])
     response = make_response(
         jsonify({"message": "Logged in.", "email": user["username_email"]})
@@ -350,10 +376,12 @@ def login():
         max_age=SESSION_LIFETIME_HOURS * 60 * 60,
         path="/",
     )
+    #-------------------------------------------------------------------------------
     
     return response
 
-
+# Demo #15
+#-----------------------------------------------------------------------------------------
 @app.post("/api/logout")
 def logout():
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
@@ -363,6 +391,7 @@ def logout():
         try:
             conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
             conn.commit()
+#-----------------------------------------------------------------------------------------
         except sqlite3.Error as exc:
             app.logger.exception("Database error during logout: %s", exc)
         finally:
@@ -407,12 +436,14 @@ def get_posts():
     finally:
         conn.close()
 
-
+# Demo #13
+#-------------------------------------------------------------------------------
 @app.post("/api/posts")
 def create_post():
     user = get_current_user()
     if not user:
         return jsonify({"error": "You must be logged in to post."}), 401
+#-------------------------------------------------------------------------------
 
     data = request.get_json(silent=True) or {}
     body = (data.get("body") or "").strip()
@@ -421,6 +452,8 @@ def create_post():
     if validation_error:
         return jsonify({"error": validation_error}), 400
 
+# Demo #14
+#-----------------------------------------------------------------------------------------
     created_at = utc_now_iso()
     author_email = user["username_email"]
 
@@ -431,6 +464,7 @@ def create_post():
             "INSERT INTO posts (created_at, author_email, body) VALUES (?, ?, ?)",
             (created_at, author_email, body),
         )
+#-----------------------------------------------------------------------------------------
         conn.commit()
         post_id = cur.lastrowid
     except sqlite3.Error as exc:
